@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  pr-title:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            chore
+            perf
+            refactor
+            docs
+            test
+            build
+            ci
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the PR title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+
+  fmt:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+
+      - name: Run rustfmt
+        run: cargo fmt --all --check
+
+  toml-fmt:
+    name: Check TOML formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup dprint
+        uses: dprint/check@v2.3
+
+  clippy:
+    name: Clippy lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev pkg-config
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev pkg-config
+
+      - name: Run tests
+        run: cargo test --locked
+
+  build:
+    name: Build binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev pkg-config
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+  docs:
+    name: Check documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev pkg-config
+
+      - name: Check documentation
+        run: cargo doc --all --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: "-D warnings"

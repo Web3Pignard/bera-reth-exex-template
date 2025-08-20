@@ -1,0 +1,64 @@
+[package]
+name = "bera-reth-exex-template"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.88.0"
+
+[dependencies]
+bera-reth = { git = "https://github.com/berachain/bera-reth", rev = "v1.0.1" }
+
+# Additional utilities
+reth = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-node-api = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-cli-commands = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-node-builder = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-exex = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+alloy-eips = "1.0.17"
+alloy-consensus = "1.0.17"
+
+# Async and utilities
+futures = "0.3"
+eyre = "0.6"
+clap = { version = "4", features = ["derive"] }
+tracing = "0.1.41"
+tokio = { version = "1.0", features = ["full"] }
+
+[features]
+default = ["jemalloc"]
+jemalloc = ["dep:tikv-jemallocator"]
+asm-keccak = ["reth/asm-keccak"]
+min-debug-logs = ["reth/min-debug-logs"]
+client = []
+
+[dependencies.tikv-jemallocator]
+version = "0.6.0"
+optional = true
+
+[profile.maxperf]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+incremental = false
+
+[[bin]]
+name = "bera-reth"
+path = "src/main.rs"
+
+[patch.crates-io]
+# patches inherited from bera-reth
+alloy-evm = { git = "https://github.com/berachain/evm", rev = "4e14d80" }
+revm = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-database = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-state = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-context = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+op-revm = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
