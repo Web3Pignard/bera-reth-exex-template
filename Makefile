@@ -22,6 +22,32 @@ docker-build: ## Build production Docker image with maxperf profile
 		.
 
 ###############################################################################
+###                               Development                               ###
+###############################################################################
+
+.PHONY: pr
+pr: ## Run all checks that are run in CI for pull requests
+	@echo "Running all PR checks..."
+	@echo "1. Checking code formatting..."
+	cargo +nightly fmt --all -- --check
+	@echo "2. Checking TOML formatting..."
+	dprint check
+	@echo "3. Running clippy..."
+	cargo +nightly clippy --all-targets --all-features -- -D warnings
+	@echo "4. Building documentation..."
+	RUSTDOCFLAGS="-D warnings" cargo doc --all --no-deps --document-private-items
+	@echo "5. Running tests..."
+	cargo test --locked
+	@echo "All PR checks passed! ✅"
+
+.PHONY: pr-fix
+pr-fix: ## Auto-fix formatting issues
+	@echo "Auto-fixing formatting issues..."
+	cargo +nightly fmt --all
+	dprint fmt
+	@echo "Formatting fixed! ✅"
+
+###############################################################################
 ###                           Local Development                             ###
 ###############################################################################
 

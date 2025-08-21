@@ -1,22 +1,21 @@
-use reth::core::primitives::AlloyBlockHeader;
+use alloy_eips::eip2718::Typed2718;
+use bera_reth::transaction::POL_TX_TYPE;
 use futures::StreamExt;
 use reth::api::BlockBody;
+use reth::core::primitives::AlloyBlockHeader;
 use reth_exex::ExExContext;
 use reth_node_api::FullNodeComponents;
-use reth_tracing::tracing::info;
-use bera_reth::transaction::POL_TX_TYPE;
-use alloy_eips::eip2718::Typed2718;
 use reth_primitives_traits::SignedTransaction;
+use reth_tracing::tracing::info;
 
-pub async fn my_indexer<Node: FullNodeComponents>(
-    mut ctx: ExExContext<Node>,
-) -> eyre::Result<()> {
+pub async fn my_indexer<Node: FullNodeComponents>(mut ctx: ExExContext<Node>) -> eyre::Result<()> {
     while let Some(Ok(notification)) = ctx.notifications.next().await {
         // We ignore ChainReorged and ChainReverted since Berachain has fast finality via CometBFT.
         if let Some(committed) = notification.committed_chain() {
             for (block, receipts) in committed.blocks_and_receipts() {
-                info!("Processing block {} with {} transactions", 
-                    block.number(), 
+                info!(
+                    "Processing block {} with {} transactions",
+                    block.number(),
                     block.body().transactions().len()
                 );
 

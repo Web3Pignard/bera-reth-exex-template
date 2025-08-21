@@ -38,6 +38,8 @@ Edit `src/exex.rs` to customize the exex. Find more information on the [official
 make help           # Show all available commands
 make start-local    # Start ExEx with BeaconKit (runs indefinitely)
 make docker-build   # Build production Docker image (maxperf profile)
+make pr             # Run all CI checks (formatting, linting, tests, docs)
+make pr-fix         # Auto-fix formatting issues
 
 # Local development
 cargo build         # Build debug binary
