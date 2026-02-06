@@ -1,6 +1,6 @@
 //! Bera-Reth ExEx Template
 
-mod exex;
+use bera_reth_exex_template::exex;
 
 use bera_reth::chainspec::BerachainChainSpecParser;
 use bera_reth::{
