@@ -7,6 +7,7 @@ use alloy_primitives::{Address, U256};
 use eyre::Result;
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
+use alloy_primitives::Log; 
 
 /// Represents an event listener that processes blocks
 pub struct EventListener {
@@ -20,16 +21,16 @@ impl EventListener {
     }
 
     /// Processes a block and extracts relevant events
-    pub async fn process_block(&self, _block: &reth_primitives::Block) -> Result<()> {
-        // Note: In ExEx context, logs are typically provided through notifications
-        // This method is a placeholder for the general structure
-        Ok(())
-    }
+    // pub async fn process_block(&self, _block: &Block) -> Result<()> {
+    //     // Note: In ExEx context, logs are typically provided through notifications
+    //     // This method is a placeholder for the general structure
+    //     Ok(())
+    // }
 
     /// Processes a transaction receipt's logs
     pub async fn process_logs(
         &self,
-        logs: &[reth_primitives::Log],
+        logs: &[Log],
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -75,7 +76,7 @@ impl EventListener {
     /// Handles ValidatorCreated event log
     async fn handle_validator_created_log(
         &self,
-        log: &reth_primitives::Log,
+        log: &Log,
         _block_number: u64,
         _block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -92,7 +93,7 @@ impl EventListener {
 
         // Extract indexed parameters from topics
         let pubkey_hash = *log.topics().get(1).unwrap();
-        let validator_address = Address::from(*log.topics().get(2).unwrap());
+        let validator_address = Address::from_word(*log.topics().get(2).unwrap());
 
         // Note: In this case, pubkey is hashed in the topic
         // In actual implementation, we need to get the original pubkey from the transaction data
@@ -108,7 +109,7 @@ impl EventListener {
     /// Handles Delegate event log
     async fn handle_delegate_log(
         &self,
-        log: &reth_primitives::Log,
+        log: &Log,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -123,19 +124,22 @@ impl EventListener {
             return Ok(());
         }
 
-        let payer_address = Address::from(*log.topics().get(1).unwrap());
-        let delegator_address = Address::from(*log.topics().get(2).unwrap());
+        let payer_address = Address::from_word(*log.topics().get(1).unwrap());
+        let delegator_address = Address::from_word(*log.topics().get(2).unwrap());
         let validator_address = log.address;
 
         // Decode data: amount and shares (each 32 bytes)
-        let data = log.data.as_ref();
+        let data = log.data.data.as_ref();
         if data.len() < 64 {
             warn!("Delegate log has insufficient data");
             return Ok(());
         }
 
-        let amount = U256::from_be_bytes(data[0..32].try_into()?);
-        let shares = U256::from_be_bytes(data[32..64].try_into()?);
+        let amount_bytes: [u8; 32] = data[0..32].try_into()?;
+        let shares_bytes: [u8; 32] = data[32..64].try_into()?;
+
+        let amount = U256::from_be_bytes(amount_bytes);
+        let shares = U256::from_be_bytes(shares_bytes);
 
         self.event_handler
             .handle_delegate(
@@ -156,7 +160,7 @@ impl EventListener {
     /// Handles Undelegate event log
     async fn handle_undelegate_log(
         &self,
-        log: &reth_primitives::Log,
+        log: &Log,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -171,19 +175,22 @@ impl EventListener {
             return Ok(());
         }
 
-        let delegator_address = Address::from(*log.topics().get(1).unwrap());
-        let withdrawal_address = Address::from(*log.topics().get(2).unwrap());
+        let delegator_address = Address::from_word(*log.topics().get(1).unwrap());
+        let withdrawal_address = Address::from_word(*log.topics().get(2).unwrap());
         let validator_address = log.address;
 
         // Decode data: shares and amount (each 32 bytes)
-        let data = log.data.as_ref();
+        let data = log.data.data.as_ref();
         if data.len() < 64 {
             warn!("Undelegate log has insufficient data");
             return Ok(());
         }
 
-        let shares = U256::from_be_bytes(data[0..32].try_into()?);
-        let amount = U256::from_be_bytes(data[32..64].try_into()?);
+        let shares_bytes: [u8; 32] = data[0..32].try_into()?;
+        let amount_bytes: [u8; 32] = data[32..64].try_into()?;
+
+        let shares = U256::from_be_bytes(shares_bytes);
+        let amount = U256::from_be_bytes(amount_bytes);
 
         self.event_handler
             .handle_undelegate(
@@ -204,7 +211,7 @@ impl EventListener {
     /// Handles Redelegate event log
     async fn handle_redelegate_log(
         &self,
-        log: &reth_primitives::Log,
+        log: &Log,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -219,18 +226,21 @@ impl EventListener {
             return Ok(());
         }
 
-        let owner_address = Address::from(*log.topics().get(1).unwrap());
+        let owner_address = Address::from_word(*log.topics().get(1).unwrap());
         let validator_address = log.address;
 
         // Decode data: amount and shares (each 32 bytes)
-        let data = log.data.as_ref();
+        let data = log.data.data.as_ref();
         if data.len() < 64 {
             warn!("Redelegate log has insufficient data");
             return Ok(());
         }
 
-        let amount = U256::from_be_bytes(data[0..32].try_into()?);
-        let shares = U256::from_be_bytes(data[32..64].try_into()?);
+        let amount_bytes: [u8; 32] = data[0..32].try_into()?;
+        let shares_bytes: [u8; 32] = data[32..64].try_into()?;
+
+        let amount = U256::from_be_bytes(amount_bytes);
+        let shares = U256::from_be_bytes(shares_bytes);
 
         self.event_handler
             .handle_redelegate(

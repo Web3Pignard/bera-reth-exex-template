@@ -1,12 +1,19 @@
+// Main ExEx implementation for Berachain staking indexer
+// Integrates database, event handling, and validator management into the Reth ExEx framework
+
+use crate::db::Database;
+use crate::event_handler::EventHandler;
+use crate::event_listener::EventListener;
+use crate::validators::ValidatorManager;
 use crate::abi;
-// use crate::db::Database;
 use std::sync::Arc;
 
+use alloy_consensus::TxReceipt;
 use alloy_eips::eip2718::Typed2718;
 use alloy_primitives::Address;
 use bera_reth::transaction::POL_TX_TYPE;
 use futures::StreamExt;
-use reth::{api::BlockBody, providers::Chain};
+use reth::api::BlockBody;
 use reth::core::primitives::AlloyBlockHeader;
 use reth_exex::{ExExContext, ExExEvent, ExExNotification};
 use reth_node_api::{FullNodeComponents, FullNodeTypes, NodeTypes};
@@ -38,8 +45,6 @@ pub async fn my_indexer<Node: FullNodeComponents>(mut ctx: ExExContext<Node>) ->
     Ok(())
 }
 
-
-
 /// Configuration for the staking indexer
 #[derive(Debug, Clone)]
 pub struct IndexerConfig {
@@ -59,40 +64,75 @@ impl Default for IndexerConfig {
 /// The main ExEx instance for staking indexing
 pub struct StakingIndexer {
     config: IndexerConfig,
+    db: Arc<Database>,
+    validator_manager: Arc<ValidatorManager>,
+    event_handler: Arc<EventHandler>,
+    event_listener: Arc<EventListener>,
 }
 
 impl StakingIndexer {
     /// Creates a new staking indexer with the given configuration
-    pub fn new(config: IndexerConfig) -> Self {
+    pub fn new(config: IndexerConfig) -> eyre::Result<Self> {
         info!("Initializing StakingIndexer with config: {:?}", config);
 
-        Self {
+        // Initialize database
+        let db = Arc::new(Database::new(&config.db_path)?);
+        info!("Database initialized");
+
+        // Initialize validator manager
+        let validator_manager = Arc::new(ValidatorManager::new(db.clone())?);
+        info!("ValidatorManager initialized"); 
+
+        // Initialize event handler
+        let event_handler = Arc::new(EventHandler::new(db.clone(), validator_manager.clone()));
+        info!("EventHandler initialized");
+
+        // Initialize event listener
+        let event_listener = Arc::new(EventListener::new(event_handler.clone()));
+        info!("EventListener initialized");
+
+        Ok(Self {
             config,
-        }
+            db,
+            validator_manager,
+            event_handler,
+            event_listener,
+        })
     }
 
     /// Handles notifications from the Reth node
     pub async fn handle_notification<Node: FullNodeComponents>(&self, notification: ExExNotification<<<Node as FullNodeTypes>::Types as NodeTypes>::Primitives>) -> eyre::Result<()> {
-        // while let Some(Ok(notification)) = ctx.notifications.next().await {
-        // We ignore ChainReorged and ChainReverted since Berachain has fast finality via CometBFT.
-        if let Some(committed) = notification.committed_chain() {
-            for (block, receipts) in committed.blocks_and_receipts() {
+        match notification {
+            ExExNotification::ChainCommitted { new } => {
+                info!("Chain committed: blocks {} to {}", new.first().number(), new.tip().number());
                 
-                info!(
-                    "Processing block {} with {} transactions",
-                    block.number(),
-                    block.body().transactions().len()
-                );
-
-                for (tx, receipt) in block.body().transactions_iter().zip(receipts.iter()) {
-                    // Check if this is a PoL transaction by looking at the tx type
-                    if tx.ty() == POL_TX_TYPE {
-                        info!("PoL TX {}: {:?}", tx.tx_hash(), receipt);
-                    }
+                // Process committed blocks
+                for block_num in new.first().number()..=new.tip().number() {
+                    debug!("Processing committed block {}", block_num);
+                    
+                    // Update sync state to track progress
+                    self.db.update_sync_state(
+                        &self.config.validator_staking_address,
+                        "staking_events",
+                        block_num,
+                    )?;
                 }
             }
+            ExExNotification::ChainReorged { old, new } => {
+                info!(
+                    "Chain reorged: old blocks {} to {}, new blocks {} to {}",
+                    old.first().number(), old.tip().number(),
+                    new.first().number(), new.tip().number()
+                );
+                // In production, you might want to handle reorgs specially
+                // For now, we just log it
+            }
+            ExExNotification::ChainReverted { old } => {
+                info!("Chain reverted: blocks {} to {}", old.first().number(), old.tip().number());
+                // Handle chain reversion if needed
+            }
         }
-   
+
         Ok(())
     }
 }
@@ -106,7 +146,7 @@ where
 
     // Initialize the indexer
     let config = IndexerConfig::default();
-    let indexer = Arc::new(StakingIndexer::new(config));
+    let indexer = Arc::new(StakingIndexer::new(config)?);
 
     info!("StakingIndexer fully initialized and ready to process events");
     

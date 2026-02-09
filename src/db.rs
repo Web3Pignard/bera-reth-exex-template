@@ -181,13 +181,16 @@ impl Database {
         let address_str = address.to_checksum(None);
 
         // Parse amounts as integers for addition
-        let current: i128 = conn
+        let current = conn
             .query_row(
-                "SELECT CAST(total_delegated AS INTEGER) FROM delegators WHERE address = ?",
+                "SELECT total_delegated FROM delegators WHERE address = ?",
                 params![&address_str],
-                |row| row.get(0),
+                |row| {
+                    let total_delegated: String = row.get(0)?;
+                    Ok(total_delegated.parse().unwrap_or(0i128))
+                }
             )
-            .unwrap_or(0);
+            .map_err(|e| eyre::eyre!("Failed to query total_delegated: {}", e))?;
 
         let amount_val: i128 = amount.parse().unwrap_or(0);
         let new_total = (current + amount_val).to_string();
@@ -211,13 +214,16 @@ impl Database {
         let address_str = address.to_checksum(None);
 
         // Parse amounts as integers for addition
-        let current: i128 = conn
+        let current = conn
             .query_row(
-                "SELECT CAST(total_undelegated AS INTEGER) FROM delegators WHERE address = ?",
+                "SELECT total_undelegated FROM delegators WHERE address = ?",
                 params![&address_str],
-                |row| row.get(0),
+                |row| {
+                    let total_undelegated: String = row.get(0)?;
+                    Ok(total_undelegated.parse().unwrap_or(0i128))
+                }
             )
-            .unwrap_or(0);
+            .map_err(|e| eyre::eyre!("Failed to query total_delegated: {}", e))?;
 
         let amount_val: i128 = amount.parse().unwrap_or(0);
         let new_total = (current + amount_val).to_string();

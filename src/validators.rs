@@ -17,7 +17,7 @@ pub struct ValidatorManager {
 
 impl ValidatorManager {
     /// Creates a new validator manager and loads validators from database
-    pub async fn new(db: Arc<Database>) -> Result<Self> {
+    pub fn new(db: Arc<Database>) -> Result<Self> {
         let validator_addresses = db.get_all_validator_addresses()?;
         
         info!("ValidatorManager initialized with {} validators", validator_addresses.len());
