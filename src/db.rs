@@ -1,4 +1,4 @@
-// Database operations module for the Berachain staking indexer
+// Database operations module for the 0gchain staking indexer
 // Handles SQLite operations for validators, delegators, and events
 
 use alloy_primitives::Address;

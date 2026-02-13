@@ -1,4 +1,4 @@
-// Main ExEx implementation for Berachain staking indexer
+// Main ExEx implementation for 0gchain staking indexer
 // Integrates database, event handling, and validator management into the Reth ExEx framework
 
 use crate::db::Database;
@@ -11,7 +11,6 @@ use std::sync::Arc;
 use alloy_consensus::TxReceipt;
 use alloy_eips::eip2718::Typed2718;
 use alloy_primitives::Address;
-use bera_reth::transaction::POL_TX_TYPE;
 use futures::StreamExt;
 use reth::api::BlockBody;
 use reth::core::primitives::AlloyBlockHeader;
@@ -22,7 +21,7 @@ use tracing::{debug, error, info};
 
 pub async fn my_indexer<Node: FullNodeComponents>(mut ctx: ExExContext<Node>) -> eyre::Result<()> {
     while let Some(Ok(notification)) = ctx.notifications.next().await {
-        // We ignore ChainReorged and ChainReverted since Berachain has fast finality via CometBFT.
+        // We ignore ChainReorged and ChainReverted since 0gchain has fast finality via CometBFT.
         if let Some(committed) = notification.committed_chain() {
             for (block, receipts) in committed.blocks_and_receipts() {
                 info!(
@@ -102,34 +101,27 @@ impl StakingIndexer {
 
     /// Handles notifications from the Reth node
     pub async fn handle_notification<Node: FullNodeComponents>(&self, notification: ExExNotification<<<Node as FullNodeTypes>::Types as NodeTypes>::Primitives>) -> eyre::Result<()> {
-        match notification {
-            ExExNotification::ChainCommitted { new } => {
-                info!("Chain committed: blocks {} to {}", new.first().number(), new.tip().number());
-                
-                // Process committed blocks
-                for block_num in new.first().number()..=new.tip().number() {
-                    debug!("Processing committed block {}", block_num);
-                    
-                    // Update sync state to track progress
-                    self.db.update_sync_state(
-                        &self.config.validator_staking_address,
-                        "staking_events",
-                        block_num,
-                    )?;
-                }
-            }
-            ExExNotification::ChainReorged { old, new } => {
+        // We ignore ChainReorged and ChainReverted since 0gchain has fast finality via CometBFT.
+        if let Some(committed) = notification.committed_chain() {
+            for (block, receipts) in committed.blocks_and_receipts() {
                 info!(
-                    "Chain reorged: old blocks {} to {}, new blocks {} to {}",
-                    old.first().number(), old.tip().number(),
-                    new.first().number(), new.tip().number()
+                    "Processing block {} with {} transactions",
+                    block.number(),
+                    block.body().transactions().len()
                 );
-                // In production, you might want to handle reorgs specially
-                // For now, we just log it
-            }
-            ExExNotification::ChainReverted { old } => {
-                info!("Chain reverted: blocks {} to {}", old.first().number(), old.tip().number());
-                // Handle chain reversion if needed
+                
+                for receipt in receipts {
+                    self.event_listener
+                        .process_logs(receipt.logs(), block.number(), Some(block.header().timestamp() as i64))
+                        .await?;
+                }
+
+                // Update sync state to track progress
+                self.db.update_sync_state(
+                    &self.config.validator_staking_address,
+                    "staking_events",
+                    block.number(),
+                )?;
             }
         }
 

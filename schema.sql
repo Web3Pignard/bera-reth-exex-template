@@ -1,4 +1,4 @@
--- Berachain Indexer SQLite Database Schema
+-- 0gchain Indexer SQLite Database Schema
 
 -- Validators table: stores validator information
 CREATE TABLE IF NOT EXISTS validators (

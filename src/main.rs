@@ -1,12 +1,7 @@
-//! Bera-Reth ExEx Template
+//! 0g-Reth ExEx Template
 
-use bera_reth_exex_template::exex;
+use zg_reth_exex_template::exex;
 
-use bera_reth::chainspec::BerachainChainSpecParser;
-use bera_reth::{
-    chainspec::BerachainChainSpec, consensus::BerachainBeaconConsensus, node::BerachainNode,
-    node::evm::config::BerachainEvmConfig,
-};
 use clap::Parser;
 use reth::CliRunner;
 use reth::cli::Cli;
@@ -17,34 +12,35 @@ use reth_tracing::tracing::info;
 use std::sync::Arc;
 
 fn main() -> eyre::Result<()> {
-    let cli_components_builder = |spec: Arc<BerachainChainSpec>| {
-        (
-            BerachainEvmConfig::new_with_evm_factory(spec.clone(), EthEvmFactory::default()),
-            BerachainBeaconConsensus::new(spec),
-        )
-    };
+    // Parse reth CLI with the provided args
+    match EthereumCli::<EthereumChainSpecParser>::try_parse_args_from(reth_args.clone()) {
+        Ok(reth_cli) => {
+            // Check if this is a node command that should have basic ExEx
+            let is_node_command = std::env::args().nth(1).map_or(false, |arg| arg == "node");
 
-    if let Err(err) = Cli::<BerachainChainSpecParser, NoArgs>::parse()
-        .with_runner_and_components::<BerachainNode>(
-            CliRunner::try_default_runtime().expect("Failed to create default runtime"),
-            cli_components_builder,
-            async move |builder, _| {
-                info!(target: "reth::cli", "Launching Berachain ExEx node");
-                let NodeHandle {
-                    node: _node,
-                    node_exit_future,
-                } = builder
-                    .node(BerachainNode::default())
-                    .install_exex("my_indexer", |ctx| async move { Ok(exex::my_indexer(ctx)) })
-                    .launch()
-                    .await?;
+            reth_cli.run(|builder, _| {
+                Box::pin(async move {
+                    if is_node_command {
+                        info!("🚀 Starting reth command: {}", reth_args.join(" "));
 
-                node_exit_future.await
-            },
-        )
-    {
-        eprintln!("Error: {err:?}");
-        std::process::exit(1);
+                        // For node commands, install basic ExEx
+                        let handle = builder
+                            .node(EthereumNode::default())
+                            .install_exex("my-exex", async move |ctx| Ok(my_indexer(ctx)))
+                            .launch()
+                            .await?;
+
+                        handle.wait_for_node_exit().await
+                    } else {
+                        Ok(())
+                    }
+                })
+            })
+        },
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
     }
 
     Ok(())

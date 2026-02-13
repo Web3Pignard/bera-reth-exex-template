@@ -1,4 +1,4 @@
-// Berachain Staking Indexer Library
+// 0gchain Staking Indexer Library
 // Provides modules for database operations, event handling, and ExEx integration
 
 pub mod abi;

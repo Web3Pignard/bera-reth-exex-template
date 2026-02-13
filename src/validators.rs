@@ -1,4 +1,4 @@
-// Validator management module for the Berachain staking indexer
+// Validator management module for the 0gchain staking indexer
 // Handles tracking and updating the list of active validators
 
 use crate::db::Database;

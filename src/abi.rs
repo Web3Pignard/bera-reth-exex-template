@@ -1,4 +1,4 @@
-// ABI definitions for Berachain staking contracts
+// ABI definitions for 0gchain staking contracts
 // Defines event signatures and log topics for event filtering
 
 use alloy_primitives::Address;

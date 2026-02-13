@@ -1,25 +1,24 @@
 [package]
-name = "bera-reth-exex-template"
+name = "zg-reth-exex-template"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+rust-version = "1.88"
 license = "MIT OR Apache-2.0"
-rust-version = "1.88.0"
 
 [dependencies]
-bera-reth = { git = "https://github.com/berachain/bera-reth", rev = "v1.0.1" }
-
-# Additional utilities
-alloy-consensus = "1.0.17"
-alloy-eips = "1.0.17"
-alloy-primitives = { version = "1.0.17", default-features = false, features = ["map-foldhash"] }
-reth = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-cli-commands = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-exex = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-node-api = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-node-builder = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", rev = "48941e6" }
+reth = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1", features = ["full", "cli"] }
+reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1", features = ["alloy-compat"] }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-rpc = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-rpc-convert = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-rpc-eth-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-network-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-execution-types = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
+reth-libmdbx = { git = "https://github.com/paradigmxyz/reth", tag = "v1.8.1" }
 
 # Database
 rusqlite = { version = "0.32", features = ["bundled", "chrono"] }
@@ -53,20 +52,21 @@ codegen-units = 1
 incremental = false
 
 [[bin]]
-name = "bera-reth"
+name = "reth"
 path = "src/main.rs"
 
-[patch.crates-io]
-# patches inherited from bera-reth
-alloy-evm = { git = "https://github.com/berachain/evm", rev = "4e14d80" }
-revm = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-bytecode = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-database = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-state = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-interpreter = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-inspector = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-context = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-context-interface = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-revm-database-interface = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
-op-revm = { git = "https://github.com/bluealloy/revm", rev = "9008e93" }
+[workspace.dependencies]
+# reth
+# reth = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-ethereum = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad", features = ["full", "cli"] }
+# reth-node-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-primitives = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad", features = ["alloy-compat"] }
+# reth-primitives-traits = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-rpc = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-rpc-convert = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-rpc-eth-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-tracing = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-network-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-execution-types = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-provider = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
+# reth-libmdbx = { git = "https://github.com/0gfoundation/0g-reth", rev = "759d0c829416356db03c0474c1299df6243a9cad" }
