@@ -33,6 +33,7 @@ impl EventListener {
     pub async fn process_logs(
         &self,
         logs: &[Log],
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -58,25 +59,25 @@ impl EventListener {
 
             // Route to appropriate handler based on event type
             if abi::is_validator_initialized_event(&event_topic.into()) {
-                self.handle_validator_initialized_log(log, block_number, block_timestamp)
+                self.handle_validator_initialized_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             } else if abi::is_old_delegate_event(&event_topic.into()) {
-                self.handle_old_delegate_log(log, block_number, block_timestamp)
+                self.handle_old_delegate_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             } else if abi::is_old_undelegate_event(&event_topic.into()) {
-                self.handle_old_undelegate_log(log, block_number, block_timestamp)
+                self.handle_old_undelegate_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             } else if abi::is_delegate_event(&event_topic.into()) {
-                self.handle_delegate_log(log, block_number, block_timestamp)
+                self.handle_delegate_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             } else if abi::is_undelegate_event(&event_topic.into()) {
-                self.handle_undelegate_log(log, block_number, block_timestamp)
+                self.handle_undelegate_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             } else if abi::is_withdraw_commission_event(&event_topic.into()) {
-                self.handle_withdraw_commission_log(log, block_number, block_timestamp)
+                self.handle_withdraw_commission_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             } else if abi::is_withdraw_tip_fee_event(&event_topic.into()) {
-                self.handle_withdraw_tip_fee_log(log, block_number, block_timestamp)
+                self.handle_withdraw_tip_fee_log(log, tx_hash.clone(), block_number, block_timestamp)
                     .await?;
             }
         }
@@ -122,6 +123,7 @@ impl EventListener {
     async fn handle_validator_initialized_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -165,7 +167,7 @@ impl EventListener {
                 validator_address,
                 operator_address,
                 amount.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )
@@ -178,6 +180,7 @@ impl EventListener {
     async fn handle_delegate_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -216,7 +219,7 @@ impl EventListener {
                 validator_address,
                 amount.to_string(),
                 shares.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )
@@ -229,6 +232,7 @@ impl EventListener {
     async fn handle_undelegate_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -267,7 +271,7 @@ impl EventListener {
                 validator_address,
                 shares.to_string(),
                 amount.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )
@@ -280,6 +284,7 @@ impl EventListener {
     async fn handle_old_delegate_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -317,7 +322,7 @@ impl EventListener {
                 validator_address,
                 amount.to_string(),
                 shares.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )
@@ -330,6 +335,7 @@ impl EventListener {
     async fn handle_old_undelegate_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -367,7 +373,7 @@ impl EventListener {
                 validator_address,
                 shares.to_string(),
                 amount.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )
@@ -380,6 +386,7 @@ impl EventListener {
     async fn handle_withdraw_commission_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -415,7 +422,7 @@ impl EventListener {
                 withdrawal_address,
                 validator_address,
                 amount.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )
@@ -428,6 +435,7 @@ impl EventListener {
     async fn handle_withdraw_tip_fee_log(
         &self,
         log: &Log,
+        tx_hash: Option<String>,
         block_number: u64,
         block_timestamp: Option<i64>,
     ) -> Result<()> {
@@ -463,7 +471,7 @@ impl EventListener {
                 withdrawal_address,
                 validator_address,
                 amount.to_string(),
-                None,
+                tx_hash,
                 Some(block_number),
                 block_timestamp,
             )

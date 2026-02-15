@@ -117,9 +117,10 @@ impl StakingIndexer {
                     block.body().transactions().len()
                 );
                 
-                for receipt in receipts {
+                for (receipt, tx) in izip!(receipts, block.body().transactions()) {
+                    let tx_hash = tx.recalculate_hash();
                     self.event_listener
-                        .process_logs(receipt.logs(), block.number(), Some(block.header().timestamp() as i64))
+                        .process_logs(receipt.logs(), Some(format!("0x{}", hex::encode(&tx_hash))),  block.number(), Some(block.header().timestamp() as i64))
                         .await?;
                 }
 
