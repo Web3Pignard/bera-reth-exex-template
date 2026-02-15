@@ -18,39 +18,6 @@ use reth_exex::{ExExContext, ExExEvent, ExExNotification};
 use reth_node_api::{FullNodeComponents, FullNodeTypes, NodeTypes};
 use tracing::{debug, error, info};
 use itertools::izip;
-
-pub async fn my_indexer<Node: FullNodeComponents>(mut ctx: ExExContext<Node>) -> eyre::Result<()> {
-    while let Some(Ok(notification)) = ctx.notifications.next().await {
-        // We ignore ChainReorged and ChainReverted since 0gchain has fast finality via CometBFT.
-        if let Some(committed) = notification.committed_chain() {
-            for (block, receipts) in committed.blocks_and_receipts() {
-                info!(
-                    "[Debug]Processing block {} with {} transactions",
-                    block.number(),
-                    block.body().transactions().len()
-                );
-
-                for (receipt, tx) in izip!(receipts, block.body().transactions()) {
-                    for log in receipt.logs() {
-                        info!("[Debug]Processing log topics: {:?}, tx_hash: {:?}", log.data.topics(), tx.recalculate_hash());
-                    }
-                }
-
-                // for receipt in receipts {
-                //     for log in receipt.logs() {
-                //         info!("[Debug]Processing log topics: {:?}", log.data.topics());
-                //     }
-                // }
-
-                ctx.send_finished_height(block.num_hash())?;
-            }
-
-        }
-    }
-
-    Ok(())
-}
-
 /// Configuration for the staking indexer
 #[derive(Debug, Clone)]
 pub struct IndexerConfig {
@@ -61,7 +28,7 @@ pub struct IndexerConfig {
 impl Default for IndexerConfig {
     fn default() -> Self {
         Self {
-            db_path: "./data/.tmp/staking_indexer.db".to_string(),
+            db_path: "/data/0g-home/0gchaind-home/data/staking_indexer.db".to_string(),
             validator_staking_address: abi::get_validator_staking_address(),
         }
     }
