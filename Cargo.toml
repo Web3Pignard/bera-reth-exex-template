@@ -88,6 +88,7 @@ tracing = "0.1.41"
 # Additional utilities
 lazy_static = "1.4"
 hex = "0.4"
+itertools = "0.10.5"
 
 [features]
 default = ["jemalloc"]

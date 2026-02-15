@@ -6,16 +6,18 @@ use crate::event_handler::EventHandler;
 use crate::event_listener::EventListener;
 use crate::validators::ValidatorManager;
 use crate::abi;
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 use alloy_consensus::TxReceipt;
 use alloy_primitives::Address;
 use futures::StreamExt;
 use reth::api::BlockBody;
 use reth::core::primitives::AlloyBlockHeader;
+use reth_ethereum::primitives::SignedTransaction;
 use reth_exex::{ExExContext, ExExEvent, ExExNotification};
 use reth_node_api::{FullNodeComponents, FullNodeTypes, NodeTypes};
 use tracing::{debug, error, info};
+use itertools::izip;
 
 pub async fn my_indexer<Node: FullNodeComponents>(mut ctx: ExExContext<Node>) -> eyre::Result<()> {
     while let Some(Ok(notification)) = ctx.notifications.next().await {
@@ -23,13 +25,26 @@ pub async fn my_indexer<Node: FullNodeComponents>(mut ctx: ExExContext<Node>) ->
         if let Some(committed) = notification.committed_chain() {
             for (block, receipts) in committed.blocks_and_receipts() {
                 info!(
-                    "Processing block {} with {} transactions",
+                    "[Debug]Processing block {} with {} transactions",
                     block.number(),
                     block.body().transactions().len()
                 );
 
+                for (receipt, tx) in izip!(receipts, block.body().transactions()) {
+                    for log in receipt.logs() {
+                        info!("[Debug]Processing log topics: {:?}, tx_hash: {:?}", log.data.topics(), tx.recalculate_hash());
+                    }
+                }
+
+                // for receipt in receipts {
+                //     for log in receipt.logs() {
+                //         info!("[Debug]Processing log topics: {:?}", log.data.topics());
+                //     }
+                // }
+
                 ctx.send_finished_height(block.num_hash())?;
             }
+
         }
     }
 
@@ -46,7 +61,7 @@ pub struct IndexerConfig {
 impl Default for IndexerConfig {
     fn default() -> Self {
         Self {
-            db_path: "./staking_indexer.db".to_string(),
+            db_path: "./data/.tmp/staking_indexer.db".to_string(),
             validator_staking_address: abi::get_validator_staking_address(),
         }
     }
@@ -79,7 +94,7 @@ impl StakingIndexer {
         info!("EventHandler initialized");
 
         // Initialize event listener
-        let event_listener = Arc::new(EventListener::new(event_handler.clone()));
+        let event_listener = Arc::new(EventListener::new(event_handler.clone(), validator_manager.clone()));
         info!("EventListener initialized");
 
         Ok(Self {

@@ -22,12 +22,12 @@ pub struct Delegator {
     pub total_undelegated: String,
 }
 
-/// Represents a staking event (Delegate, Undelegate, or Redelegate)
+/// Represents a staking event (Delegate, Undelegate, or WithdrawCommission)
 #[derive(Debug, Clone)]
 pub struct StakingEvent {
     pub delegator_address: Address,
     pub validator_address: Address,
-    pub event_type: u8, // 0: Delegate, 1: Undelegate, 2: Redelegate
+    pub event_type: u8, // 0: Delegate, 1: Undelegate, 2: WithdrawCommission, 3: WithdrawTipFee
     pub amount: String,
     pub shares: String,
     pub transaction_hash: Option<String>,

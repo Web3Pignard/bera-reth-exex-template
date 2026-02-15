@@ -3,7 +3,7 @@
 -- Validators table: stores validator information
 CREATE TABLE IF NOT EXISTS validators (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pubkey TEXT NOT NULL UNIQUE CHECK (LENGTH(pubkey) = 98),
+    pubkey TEXT NOT NULL UNIQUE CHECK (LENGTH(pubkey) = 66),
     address TEXT NOT NULL UNIQUE CHECK (LENGTH(address) = 42),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     delegator_address TEXT NOT NULL CHECK (LENGTH(delegator_address) = 42),
     validator_address TEXT NOT NULL CHECK (LENGTH(validator_address) = 42),
-    event_type INTEGER NOT NULL,  -- 0: Delegate, 1: Undelegate, 2: Redelegate
+    event_type INTEGER NOT NULL,  -- 0: Delegate, 1: Undelegate, 2: WithdrawCommission, 3: WithdrawTipFee
     amount TEXT NOT NULL,  -- Store as TEXT for BigNumber representation
     shares TEXT NOT NULL,  -- Store as TEXT for BigNumber representation
     transaction_hash TEXT,

@@ -12,7 +12,7 @@ fn main() -> eyre::Result<()> {
     reth::cli::Cli::parse_args().run(|builder, _| async move {
         let handle = builder
             .node(EthereumNode::default())
-            .install_exex("my_indexer", |ctx| async move { Ok(exex::my_indexer(ctx)) })
+            .install_exex("staking_indexer", |ctx| async move { Ok(exex::staking_indexer_exex(ctx)) })
             .launch_with_debug_capabilities()
             .await?;
 
