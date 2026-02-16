@@ -9,7 +9,7 @@ use crate::abi;
 use std::{hash::Hash, sync::Arc};
 
 use alloy_consensus::TxReceipt;
-use alloy_primitives::Address;
+use alloy_primitives::{Address, address};
 use futures::StreamExt;
 use reth::api::BlockBody;
 use reth::core::primitives::AlloyBlockHeader;
@@ -29,6 +29,7 @@ impl Default for IndexerConfig {
     fn default() -> Self {
         Self {
             db_path: "/data/0g-home/0gchaind-home/data/staking_indexer.db".to_string(),
+            // db_path: "./data/.tmp/staking_indexer.db".to_string(),
             validator_staking_address: abi::get_validator_staking_address(),
         }
     }
@@ -83,6 +84,44 @@ impl StakingIndexer {
                     block.number(),
                     block.body().transactions().len()
                 );
+
+                if block.number() == 1 {
+                    self.event_handler.handle_validator_initialized(
+                        String::from("0x57005c26d25f8a1784c6746f176ef451f65780d0f918ab9bd7800cfeb7b69165"),
+                         address!("0x712A30816a8756c8FdB78dE63DB55aA70d3CF3B4"), 
+                         address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"), 
+                         String::from("500000000000000000000"), 
+                         None, 
+                         Some(0), 
+                         None).await?;
+            
+                    self.event_handler.handle_validator_initialized(
+                    String::from("0xed73214d2fe5105e5c53eb74b77775970cfb96eecc5c96999d9c81766619a3d9"),
+                        address!("0x81568B27b210538869f5659035eBF506d2FC3384"), 
+                        address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"), 
+                        String::from("500000000000000000000"), 
+                        None, 
+                        Some(0), 
+                        None).await?;
+            
+                    self.event_handler.handle_validator_initialized(
+                        String::from("0x75aeacc1d243f49c9af212986dbf7277fc2728369f4c25ed17d3930bd959df26"),
+                            address!("0x8EE1Af5B2791c7fa6065A02e4B579A9cC78388Fb"), 
+                            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"), 
+                            String::from("500000000000000000000"), 
+                            None, 
+                            Some(0), 
+                            None).await?;
+            
+                    self.event_handler.handle_validator_initialized(
+                        String::from("0xf2b0f141d3fad3247c4a200138729dba2ff0bb395837b9425431b0ec39a784d1"),
+                            address!("0xcb8FB96dD0F60085c9B0ef4FFAeA219caFFBF972"), 
+                            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"), 
+                            String::from("500000000000000000000"), 
+                            None, 
+                            Some(0), 
+                            None).await?;
+                }
                 
                 for (receipt, tx) in izip!(receipts, block.body().transactions()) {
                     let tx_hash = tx.recalculate_hash();

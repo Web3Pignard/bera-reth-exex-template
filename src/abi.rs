@@ -1,7 +1,7 @@
 // ABI definitions for 0gchain staking contracts
 // Defines event signatures and log topics for event filtering
 
-use alloy_primitives::Address;
+use alloy_primitives::{Address, address};
 use lazy_static::lazy_static;
 
 // ValidatorStaking contract address
@@ -60,8 +60,7 @@ lazy_static! {
 
 /// Returns the ValidatorStaking contract address
 pub fn get_validator_staking_address() -> Address {
-    Address::parse_checksummed(VALIDATOR_STAKING_ADDRESS, None)
-        .expect("Invalid validator staking address")
+    address!("0xea224dBB52F57752044c0C86aD50930091F561B9")
 }
 
 /// Checks if a log topic matches ValidatorCreated event
