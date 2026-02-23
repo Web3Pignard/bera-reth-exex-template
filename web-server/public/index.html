@@ -181,6 +181,95 @@
             padding: 40px;
             color: #999;
         }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .pagination-info {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .pagination-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pagination-btns button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        a.address-link, a.tx-link {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        a.address-link:hover, a.tx-link:hover {
+            text-decoration: underline;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .events-table {
+            table-layout: fixed;
+            width: 100%;
+            min-width: 800px;
+        }
+
+        .events-table th:nth-child(1), .events-table td:nth-child(1) { width: 12%; }
+        .events-table .cell-tx { word-break: break-all; font-size: 0.85em; }
+
+        @media (max-width: 900px) {
+            .events-table tr {
+                display: block;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                padding: 12px;
+            }
+            .events-table thead { display: none; }
+            .events-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                padding: 8px 0;
+                border: none;
+            }
+            .events-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #555;
+                min-width: 120px;
+            }
+        }
+
+        .beacon-data {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-width: 420px;
+            max-height: 200px;
+            overflow: auto;
+            margin: 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .beacon-data-none {
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -197,35 +286,65 @@
             <!-- Validators Section -->
             <div id="validators" class="section active">
                 <h2>Validators</h2>
+                <div class="filters">
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <label for="filter-validator-address">Address:</label>
+                            <input type="text" id="filter-validator-address" placeholder="0x... (可选)">
+                        </div>
+                        <div class="filter-item" style="display: flex; align-items: flex-end;">
+                            <button onclick="loadValidators(1)">应用过滤</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="validators-loading" class="loading">加载中...</div>
                 <div id="validators-error" class="error" style="display: none;"></div>
-                <table id="validators-table" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Address</th>
-                            <th>Pubkey</th>
-                        </tr>
-                    </thead>
-                    <tbody id="validators-tbody"></tbody>
-                </table>
+                <div class="table-wrap">
+                    <table id="validators-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>PubkeyHash</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="validators-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="validators-pagination" class="pagination" style="display: none;"></div>
                 <div id="validators-empty" class="empty" style="display: none;">暂无数据</div>
             </div>
             
             <!-- Delegators Section -->
             <div id="delegators" class="section">
                 <h2>Delegators</h2>
+                <div class="filters">
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <label for="filter-delegator-address">Address:</label>
+                            <input type="text" id="filter-delegator-address" placeholder="0x... (可选)">
+                        </div>
+                        <div class="filter-item" style="display: flex; align-items: flex-end;">
+                            <button onclick="loadDelegators(1)">应用过滤</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="delegators-loading" class="loading">加载中...</div>
                 <div id="delegators-error" class="error" style="display: none;"></div>
-                <table id="delegators-table" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Address</th>
-                            <th>Total Delegated</th>
-                            <th>Total Undelegated</th>
-                        </tr>
-                    </thead>
-                    <tbody id="delegators-tbody"></tbody>
-                </table>
+                <div class="table-wrap">
+                    <table id="delegators-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Total Delegated</th>
+                                <th>Total Undelegated</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delegators-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="delegators-pagination" class="pagination" style="display: none;"></div>
                 <div id="delegators-empty" class="empty" style="display: none;">暂无数据</div>
             </div>
             
@@ -259,76 +378,126 @@
                 </div>
                 <div id="events-loading" class="loading">加载中...</div>
                 <div id="events-error" class="error" style="display: none;"></div>
-                <table id="events-table" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Delegator Address</th>
-                            <th>Validator Address</th>
-                            <th>Event Type</th>
-                            <th>Amount</th>
-                            <th>Shares</th>
-                            <th>Transaction Hash</th>
-                            <th>Block Number</th>
-                            <th>Block Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="events-tbody"></tbody>
-                </table>
+                <div class="table-wrap">
+                    <table id="events-table" class="events-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Transaction Hash</th>
+                                <th>Delegator Address</th>
+                                <th>Validator Address</th>
+                                <th>Event Type</th>
+                                <th>Amount</th>
+                                <th>Block Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="events-pagination" class="pagination" style="display: none;"></div>
                 <div id="events-empty" class="empty" style="display: none;">暂无数据</div>
             </div>
         </div>
     </div>
     
     <script>
+        const CHAINSCAN_BASE = 'https://chainscan.0g.ai';
+        const PAGE_SIZE = 20;
+
         function showSection(sectionName) {
-            // 隐藏所有 section
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-            
-            // 显示选中的 section
             document.getElementById(sectionName).classList.add('active');
             event.target.classList.add('active');
-            
-            // 加载对应数据
-            if (sectionName === 'validators') {
-                loadValidators();
-            } else if (sectionName === 'delegators') {
-                loadDelegators();
-            } else if (sectionName === 'events') {
-                loadEvents();
-            }
+            if (sectionName === 'validators') loadValidators(1);
+            else if (sectionName === 'delegators') loadDelegators(1);
+            else if (sectionName === 'events') loadEvents(1);
         }
-        
-        async function loadValidators() {
+
+        function renderPagination(containerId, page, total, pageSize, loadFn) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (total === 0 || totalPages <= 1) {
+                el.style.display = 'none';
+                return;
+            }
+            el.style.display = 'flex';
+            el.innerHTML = `
+                <span class="pagination-info">共 ${total} 条，第 ${page} / ${totalPages} 页</span>
+                <div class="pagination-btns">
+                    <button onclick="${loadFn}(${page - 1})" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+                    <button onclick="${loadFn}(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>下一页</button>
+                </div>
+            `;
+        }
+
+        const BEACON_VALIDATORS_URL = 'http://localhost:3500/eth/v1/beacon/states/head/validators';
+
+        function normalizePubkey(pubkey) {
+            if (!pubkey) return '';
+            const p = String(pubkey).trim();
+            return p.startsWith('0x') ? p.toLowerCase() : ('0x' + p).toLowerCase();
+        }
+
+        async function loadValidators(page) {
+            page = page || 1;
             const loading = document.getElementById('validators-loading');
             const error = document.getElementById('validators-error');
             const table = document.getElementById('validators-table');
             const tbody = document.getElementById('validators-tbody');
             const empty = document.getElementById('validators-empty');
-            
+            const pagination = document.getElementById('validators-pagination');
+
             loading.style.display = 'block';
             error.style.display = 'none';
             table.style.display = 'none';
             empty.style.display = 'none';
-            
+            pagination.style.display = 'none';
+
             try {
-                const response = await fetch('/api/validators');
-                if (!response.ok) throw new Error('Failed to fetch validators');
-                
-                const data = await response.json();
-                
+                const address = document.getElementById('filter-validator-address').value.trim();
+                const params = new URLSearchParams({ page });
+                if (address) params.append('address', address);
+
+                const [validatorsRes, beaconRes] = await Promise.all([
+                    fetch('/api/validators?' + params.toString()),
+                    fetch(BEACON_VALIDATORS_URL).catch(() => null)
+                ]);
+
+                if (!validatorsRes.ok) throw new Error('Failed to fetch validators');
+                const json = await validatorsRes.json();
+                const { data, total } = json;
+
+                let beaconByAddress = {};
+                if (beaconRes && beaconRes.ok) {
+                    const beacon = await beaconRes.json();
+                    const list = beacon.data || [];
+                    list.forEach(item => {
+                        const withdrawal_credentials = item.validator && item.validator.withdrawal_credentials && normalizePubkey(item.validator.withdrawal_credentials);
+                        if (withdrawal_credentials) beaconByAddress['0x' + withdrawal_credentials.slice(26)] = item;
+                    });
+                }
+
                 loading.style.display = 'none';
-                
-                if (data.length === 0) {
+
+                if (!data.length) {
                     empty.style.display = 'block';
                 } else {
-                    tbody.innerHTML = data.map(v => `
-                        <tr>
-                            <td class="address">${v.address}</td>
-                            <td class="address">${v.pubkey}</td>
-                        </tr>
-                    `).join('');
+                    tbody.innerHTML = data.map(v => {
+                        const url = CHAINSCAN_BASE + '/address/' + encodeURIComponent(v.address);
+                        const addr = normalizePubkey(v.address);
+                        const beaconItem = beaconByAddress[addr];
+                        const dataCell = beaconItem
+                            ? '<pre class="beacon-data">' + escapeHtml(JSON.stringify(beaconItem, null, 2)) + '</pre>'
+                            : '<span class="beacon-data-none">—</span>';
+                        return `<tr>
+                            <td class="address"><a class="address-link" href="${url}" target="_blank" rel="noopener">${escapeHtml(v.address)}</a></td>
+                            <td class="address">${escapeHtml(v.pubkey)}</td>
+                            <td>${dataCell}</td>
+                        </tr>`;
+                    }).join('');
                     table.style.display = 'table';
+                    renderPagination('validators-pagination', json.page, total, PAGE_SIZE, 'loadValidators');
                 }
             } catch (err) {
                 loading.style.display = 'none';
@@ -336,38 +505,59 @@
                 error.style.display = 'block';
             }
         }
-        
-        async function loadDelegators() {
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        async function loadDelegators(page) {
+            page = page || 1;
             const loading = document.getElementById('delegators-loading');
             const error = document.getElementById('delegators-error');
             const table = document.getElementById('delegators-table');
             const tbody = document.getElementById('delegators-tbody');
             const empty = document.getElementById('delegators-empty');
-            
+            const pagination = document.getElementById('delegators-pagination');
+
             loading.style.display = 'block';
             error.style.display = 'none';
             table.style.display = 'none';
             empty.style.display = 'none';
-            
+            pagination.style.display = 'none';
+
             try {
-                const response = await fetch('/api/delegators');
+                const address = document.getElementById('filter-delegator-address').value.trim();
+                const params = new URLSearchParams({ page, with_events: '1' });
+                if (address) params.append('address', address);
+
+                const response = await fetch('/api/delegators?' + params.toString());
                 if (!response.ok) throw new Error('Failed to fetch delegators');
-                
-                const data = await response.json();
-                
+                const json = await response.json();
+                const { data, total } = json;
+
                 loading.style.display = 'none';
-                
-                if (data.length === 0) {
+
+                if (!data.length) {
                     empty.style.display = 'block';
                 } else {
-                    tbody.innerHTML = data.map(d => `
-                        <tr>
-                            <td class="address">${d.address}</td>
-                            <td>${d.total_delegated}</td>
-                            <td>${d.total_undelegated}</td>
-                        </tr>
-                    `).join('');
+                    tbody.innerHTML = data.map(d => {
+                        const url = CHAINSCAN_BASE + '/address/' + encodeURIComponent(d.address);
+                        const dataPayload = d.data != null ? d.data : [];
+                        const dataCell = dataPayload.length
+                            ? '<pre class="beacon-data">' + escapeHtml(JSON.stringify(dataPayload, null, 2)) + '</pre>'
+                            : '<span class="beacon-data-none">—</span>';
+                        return `<tr>
+                            <td class="address"><a class="address-link" href="${url}" target="_blank" rel="noopener">${escapeHtml(d.address)}</a></td>
+                            <td>${escapeHtml(d.total_delegated)}</td>
+                            <td>${escapeHtml(d.total_undelegated)}</td>
+                            <td>${dataCell}</td>
+                        </tr>`;
+                    }).join('');
                     table.style.display = 'table';
+                    renderPagination('delegators-pagination', json.page, total, PAGE_SIZE, 'loadDelegators');
                 }
             } catch (err) {
                 loading.style.display = 'none';
@@ -375,59 +565,63 @@
                 error.style.display = 'block';
             }
         }
-        
-        async function loadEvents() {
+
+        const eventTypeMap = { 0: 'Delegate', 1: 'Undelegate', 2: 'WithdrawCommission', 3: 'WithdrawTipFee' };
+
+        async function loadEvents(page) {
+            page = page || 1;
             const loading = document.getElementById('events-loading');
             const error = document.getElementById('events-error');
             const table = document.getElementById('events-table');
             const tbody = document.getElementById('events-tbody');
             const empty = document.getElementById('events-empty');
-            
+            const pagination = document.getElementById('events-pagination');
+
             loading.style.display = 'block';
             error.style.display = 'none';
             table.style.display = 'none';
             empty.style.display = 'none';
-            
+            pagination.style.display = 'none';
+
             try {
                 const delegator = document.getElementById('filter-delegator').value.trim();
                 const validator = document.getElementById('filter-validator').value.trim();
                 const eventType = document.getElementById('filter-event-type').value;
-                
-                const params = new URLSearchParams();
+                const params = new URLSearchParams({ page });
                 if (delegator) params.append('delegator_address', delegator);
                 if (validator) params.append('validator_address', validator);
                 if (eventType !== '') params.append('event_type', eventType);
-                
+
                 const response = await fetch('/api/events?' + params.toString());
                 if (!response.ok) throw new Error('Failed to fetch events');
-                
-                const data = await response.json();
-                
+                const json = await response.json();
+                const { data, total } = json;
+
                 loading.style.display = 'none';
-                
-                if (data.length === 0) {
+
+                if (!data.length) {
                     empty.style.display = 'block';
                 } else {
-                    const eventTypeMap = {
-                        0: 'Delegate',
-                        1: 'Undelegate',
-                        2: 'WithdrawCommission',
-                        3: 'WithdrawTipFee'
-                    };
-                    
-                    tbody.innerHTML = data.map(e => `
-                        <tr>
-                            <td class="address">${e.delegator_address || '-'}</td>
-                            <td class="address">${e.validator_address || '-'}</td>
-                            <td>${e.event_type} (${eventTypeMap[e.event_type] || 'Unknown'})</td>
-                            <td>${e.amount || '-'}</td>
-                            <td>${e.shares || '-'}</td>
-                            <td class="address">${e.transaction_hash || '-'}</td>
-                            <td>${e.block_number || '-'}</td>
-                            <td>${e.block_timestamp ? new Date(e.block_timestamp * 1000).toLocaleString() : '-'}</td>
-                        </tr>
-                    `).join('');
+                    const labels = ['Transaction Hash', 'Delegator Address', 'Validator Address', 'Event Type', 'Amount', 'Block Timestamp'];
+                    tbody.innerHTML = data.map(e => {
+                        const txHash = e.transaction_hash || '-';
+                        const txCell = e.transaction_hash
+                            ? `<a class="tx-link cell-tx" href="${CHAINSCAN_BASE}/tx/${encodeURIComponent(e.transaction_hash)}" target="_blank" rel="noopener">${e.transaction_hash}</a>`
+                            : txHash;
+                        const delegator_url = CHAINSCAN_BASE + '/address/' + encodeURIComponent(e.delegator_address);
+                        const validator_url = CHAINSCAN_BASE + '/address/' + encodeURIComponent(e.validator_address);
+                        const ts = e.block_timestamp ? new Date(e.block_timestamp * 1000).toLocaleString() : '-';
+                        return `<tr>
+                            <td data-label="${labels[0]}" class="cell-tx">${txCell}</td>
+                            <td data-label="${labels[1]}" class="cell-tx"><a class="address-link" href="${delegator_url}" target="_blank" rel="noopener">${escapeHtml(e.delegator_address)}</a></td>
+                            <td data-label="${labels[2]}" class="cell-tx"><a class="address-link" href="${validator_url}" target="_blank" rel="noopener">${escapeHtml(e.validator_address)}</a></td>
+                            <td data-label="${labels[3]}">${e.event_type} (${eventTypeMap[e.event_type] || 'Unknown'})</td>
+                            <td data-label="${labels[4]}">${e.amount || '-'}</td>
+                            <td data-label="${labels[5]}">${ts}</td>
+                        </tr>`;
+                    }).join('');
                     table.style.display = 'table';
+                    renderPagination('events-pagination', json.page, total, PAGE_SIZE, 'loadEvents');
                 }
             } catch (err) {
                 loading.style.display = 'none';
@@ -435,11 +629,8 @@
                 error.style.display = 'block';
             }
         }
-        
-        // 页面加载时加载 validators 数据
-        window.addEventListener('DOMContentLoaded', () => {
-            loadValidators();
-        });
+
+        window.addEventListener('DOMContentLoaded', () => loadValidators(1));
     </script>
 </body>
 </html>
