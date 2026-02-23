@@ -1,6 +1,7 @@
 # Rust
 /target
 
+web-server/node_modules
 # IDE
 /.idea
 /.vscode
