@@ -113,27 +113,27 @@ path = "src/main.rs"
 
 [patch.crates-io]
 # reth
-reth = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-ethereum = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7", features = ["full"] }
-reth-chainspec = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-ethereum-cli = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-discv5 = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-execution-errors = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-execution-types = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-exex = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7", features = ["serde"] }
-reth-eth-wire = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-evm = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-network = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7", features = ["test-utils"] }
-reth-network-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-network-peers = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-node-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-node-ethereum = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-primitives = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-# reth-primitives-traits = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-provider = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-revm = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-transaction-pool = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
-reth-tracing = { git = "https://github.com/0gfoundation/0g-reth", rev = "6df6e2d7623d2e366a62ffbb4809cc5d10bd60b7" }
+reth = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-ethereum = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5", features = ["full"] }
+reth-chainspec = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-ethereum-cli = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-discv5 = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-execution-errors = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-execution-types = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-exex = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5", features = ["serde"] }
+reth-eth-wire = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-evm = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-network = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5", features = ["test-utils"] }
+reth-network-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-network-peers = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-node-api = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-node-ethereum = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-primitives = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+# reth-primitives-traits = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-provider = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-revm = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-transaction-pool = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
+reth-tracing = { git = "https://github.com/0gfoundation/0g-reth", rev = "fcb71e04e3a3497c7ebe7cc2ef52c9b15bb40dc5" }
 
 # revm
 revm = { git = "https://github.com/0gfoundation/revm", rev = "6ba11f7052fa3de8aec344fd5acd952bb23b0ed7" }
