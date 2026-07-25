@@ -10,6 +10,7 @@ use std::{hash::Hash, sync::Arc};
 
 use alloy_consensus::TxReceipt;
 use alloy_primitives::{Address, address};
+use clap::Args;
 use futures::StreamExt;
 use reth::api::BlockBody;
 use reth::core::primitives::AlloyBlockHeader;
@@ -18,6 +19,20 @@ use reth_exex::{ExExContext, ExExEvent, ExExNotification};
 use reth_node_api::{FullNodeComponents, FullNodeTypes, NodeTypes};
 use tracing::{debug, error, info};
 use itertools::izip;
+
+/// Default path for the staking indexer SQLite database, matching the containerized
+/// deployment layout this ExEx is normally run in.
+pub const DEFAULT_DB_PATH: &str = "/data/0g-home/0gchaind-home/data/staking_indexer.db";
+
+/// CLI arguments for configuring the staking indexer ExEx
+#[derive(Debug, Clone, Args)]
+#[command(next_help_heading = "Staking Indexer")]
+pub struct IndexerArgs {
+    /// Path to the staking indexer SQLite database file
+    #[arg(long = "indexer.db-path", default_value = DEFAULT_DB_PATH)]
+    pub db_path: String,
+}
+
 /// Configuration for the staking indexer
 #[derive(Debug, Clone)]
 pub struct IndexerConfig {
@@ -25,13 +40,16 @@ pub struct IndexerConfig {
     pub validator_staking_address: Address,
 }
 
+impl IndexerConfig {
+    /// Creates a new config with the given database path
+    pub fn new(db_path: String) -> Self {
+        Self { db_path, validator_staking_address: abi::get_validator_staking_address() }
+    }
+}
+
 impl Default for IndexerConfig {
     fn default() -> Self {
-        Self {
-            db_path: "/data/0g-home/0gchaind-home/data/staking_indexer.db".to_string(),
-            // db_path: "./data/.tmp/staking_indexer.db".to_string(),
-            validator_staking_address: abi::get_validator_staking_address(),
-        }
+        Self::new(DEFAULT_DB_PATH.to_string())
     }
 }
 
@@ -144,14 +162,14 @@ impl StakingIndexer {
 }
 
 /// The main ExEx function that runs alongside Reth
-pub async fn staking_indexer_exex<N>(mut ctx: ExExContext<N>) -> eyre::Result<()>
+pub async fn staking_indexer_exex<N>(mut ctx: ExExContext<N>, db_path: String) -> eyre::Result<()>
 where
     N: FullNodeComponents,
 {
     info!("Starting Staking Indexer ExEx");
 
     // Initialize the indexer
-    let config = IndexerConfig::default();
+    let config = IndexerConfig::new(db_path);
     let indexer = Arc::new(StakingIndexer::new(config)?);
 
     info!("StakingIndexer fully initialized and ready to process events");

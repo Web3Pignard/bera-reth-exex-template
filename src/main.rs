@@ -1,18 +1,19 @@
 //! Bera-Reth ExEx Template
 
-use zg_reth_exex_template::exex;
+use zg_reth_exex_template::exex::{self, IndexerArgs};
 
-use reth_exex::{ExExContext, ExExEvent, ExExNotification};
-use reth_node_api::FullNodeComponents;
+use clap::Parser;
+use reth::cli::Cli;
+use reth_ethereum_cli::chainspec::EthereumChainSpecParser;
 use reth_node_ethereum::EthereumNode;
-use reth_tracing::tracing::info;
-
 
 fn main() -> eyre::Result<()> {
-    reth::cli::Cli::parse_args().run(|builder, _| async move {
+    Cli::<EthereumChainSpecParser, IndexerArgs>::parse().run(|builder, indexer_args| async move {
         let handle = builder
             .node(EthereumNode::default())
-            .install_exex("staking_indexer", |ctx| async move { Ok(exex::staking_indexer_exex(ctx)) })
+            .install_exex("staking_indexer", move |ctx| async move {
+                Ok(exex::staking_indexer_exex(ctx, indexer_args.db_path))
+            })
             .launch_with_debug_capabilities()
             .await?;
 
