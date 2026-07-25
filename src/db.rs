@@ -22,6 +22,15 @@ pub struct Delegator {
     pub total_undelegated: String,
 }
 
+/// Represents a validator's operator/owner commission and tip fee withdrawals
+#[derive(Debug, Clone)]
+pub struct ValidatorOperator {
+    pub validator_address: Address,
+    pub owner_address: Address,
+    pub total_commission_withdrawn: String,
+    pub total_tip_fee_withdrawn: String,
+}
+
 /// Represents a staking event (Delegate, Undelegate, or WithdrawCommission)
 #[derive(Debug, Clone)]
 pub struct StakingEvent {
@@ -237,6 +246,71 @@ impl Database {
         ).map_err(|e| eyre::eyre!("Failed to add undelegated amount: {}", e))?;
 
         debug!("Added undelegated amount {} to delegator {}", amount, address);
+        Ok(())
+    }
+
+    // ============ Validator Operator Operations ============
+
+    /// Retrieves a validator operator's withdrawal totals
+    pub fn get_validator_operator(
+        &self,
+        validator_address: &Address,
+        owner_address: &Address,
+    ) -> Result<Option<ValidatorOperator>> {
+        let conn = self.conn.lock().map_err(|e| eyre::eyre!("Failed to lock database: {}", e))?;
+
+        let validator_str = validator_address.to_checksum(None);
+        let owner_str = owner_address.to_checksum(None);
+
+        let validator_operator = conn
+            .query_row(
+                "SELECT validator_address, owner_address, total_commission_withdrawn, total_tip_fee_withdrawn
+                 FROM validator_operator WHERE validator_address = ? AND owner_address = ?",
+                params![&validator_str, &owner_str],
+                |row| {
+                    Ok(ValidatorOperator {
+                        validator_address: Address::parse_checksummed(&row.get::<_, String>(0)?, None)
+                            .unwrap_or_default(),
+                        owner_address: Address::parse_checksummed(&row.get::<_, String>(1)?, None)
+                            .unwrap_or_default(),
+                        total_commission_withdrawn: row.get(2)?,
+                        total_tip_fee_withdrawn: row.get(3)?,
+                    })
+                },
+            )
+            .optional()
+            .map_err(|e| eyre::eyre!("Failed to query validator operator: {}", e))?;
+
+        Ok(validator_operator)
+    }
+
+    /// Inserts or updates a validator operator's withdrawal totals
+    pub fn upsert_validator_operator(
+        &self,
+        validator_address: &Address,
+        owner_address: &Address,
+        total_commission_withdrawn: &str,
+        total_tip_fee_withdrawn: &str,
+    ) -> Result<()> {
+        let conn = self.conn.lock().map_err(|e| eyre::eyre!("Failed to lock database: {}", e))?;
+
+        let validator_str = validator_address.to_checksum(None);
+        let owner_str = owner_address.to_checksum(None);
+
+        conn.execute(
+            "INSERT INTO validator_operator (validator_address, owner_address, total_commission_withdrawn, total_tip_fee_withdrawn, created_at, updated_at)
+             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+             ON CONFLICT(validator_address, owner_address) DO UPDATE SET
+             total_commission_withdrawn = excluded.total_commission_withdrawn,
+             total_tip_fee_withdrawn = excluded.total_tip_fee_withdrawn,
+             updated_at = CURRENT_TIMESTAMP",
+            params![&validator_str, &owner_str, total_commission_withdrawn, total_tip_fee_withdrawn],
+        ).map_err(|e| eyre::eyre!("Failed to upsert validator operator: {}", e))?;
+
+        debug!(
+            "Validator operator upserted: validator={}, owner={} (commission: {}, tip_fee: {})",
+            validator_address, owner_address, total_commission_withdrawn, total_tip_fee_withdrawn
+        );
         Ok(())
     }
 

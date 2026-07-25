@@ -26,6 +26,24 @@ CREATE TABLE IF NOT EXISTS delegators (
 -- Create index on address for faster lookups
 CREATE INDEX IF NOT EXISTS idx_delegators_address ON delegators(address);
 
+-- Validator operator table: tracks commission/tip fee withdrawals by a validator's
+-- owner/operator address. Kept separate from `delegators` because these withdrawals
+-- are not undelegations and shouldn't be aggregated into total_undelegated.
+CREATE TABLE IF NOT EXISTS validator_operator (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    validator_address TEXT NOT NULL CHECK (LENGTH(validator_address) = 42),
+    owner_address TEXT NOT NULL CHECK (LENGTH(owner_address) = 42),
+    total_commission_withdrawn TEXT NOT NULL DEFAULT '0',  -- Store as TEXT for BigNumber representation
+    total_tip_fee_withdrawn TEXT NOT NULL DEFAULT '0',  -- Store as TEXT for BigNumber representation
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(validator_address, owner_address)
+);
+
+-- Create indexes on validator/owner for faster lookups
+CREATE INDEX IF NOT EXISTS idx_validator_operator_validator ON validator_operator(validator_address);
+CREATE INDEX IF NOT EXISTS idx_validator_operator_owner ON validator_operator(owner_address);
+
 -- Events table: stores all delegation and undelegation events
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

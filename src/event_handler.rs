@@ -256,21 +256,25 @@ impl EventHandler {
         // Insert event
         self.db.insert_event(&event)?;
 
-        // Get or create delegator record and update total_undelegated
-        match self.db.get_delegator(&owner_address)? {
-            Some(delegator) => {
+        // Get or create validator operator record and update total_commission_withdrawn
+        match self.db.get_validator_operator(&validator_address, &owner_address)? {
+            Some(operator) => {
                 // Calculate new total
-                let current: i128 = delegator.total_undelegated.parse().unwrap_or(0);
+                let current: i128 = operator.total_commission_withdrawn.parse().unwrap_or(0);
                 let amount_val: i128 = amount.parse().unwrap_or(0);
                 let new_total = (current + amount_val).to_string();
 
-                self.db
-                    .upsert_delegator(&owner_address, &delegator.total_delegated, &new_total)?;
+                self.db.upsert_validator_operator(
+                    &validator_address,
+                    &owner_address,
+                    &new_total,
+                    &operator.total_tip_fee_withdrawn,
+                )?;
             }
             None => {
-                // Create new delegator record with undelegated amount
+                // Create new validator operator record with commission withdrawn
                 self.db
-                    .upsert_delegator(&owner_address, "0", &amount)?;
+                    .upsert_validator_operator(&validator_address, &owner_address, &amount, "0")?;
             }
         }
 
@@ -310,21 +314,25 @@ impl EventHandler {
         // Insert event
         self.db.insert_event(&event)?;
 
-        // Get or create delegator record and update total_undelegated
-        match self.db.get_delegator(&owner_address)? {
-            Some(delegator) => {
+        // Get or create validator operator record and update total_tip_fee_withdrawn
+        match self.db.get_validator_operator(&validator_address, &owner_address)? {
+            Some(operator) => {
                 // Calculate new total
-                let current: i128 = delegator.total_undelegated.parse().unwrap_or(0);
+                let current: i128 = operator.total_tip_fee_withdrawn.parse().unwrap_or(0);
                 let amount_val: i128 = amount.parse().unwrap_or(0);
                 let new_total = (current + amount_val).to_string();
 
-                self.db
-                    .upsert_delegator(&owner_address, &delegator.total_delegated, &new_total)?;
+                self.db.upsert_validator_operator(
+                    &validator_address,
+                    &owner_address,
+                    &operator.total_commission_withdrawn,
+                    &new_total,
+                )?;
             }
             None => {
-                // Create new delegator record with undelegated amount
+                // Create new validator operator record with tip fee withdrawn
                 self.db
-                    .upsert_delegator(&owner_address, "0", &amount)?;
+                    .upsert_validator_operator(&validator_address, &owner_address, "0", &amount)?;
             }
         }
 
