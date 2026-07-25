@@ -8,6 +8,25 @@ GIT_SHA ?= $(shell git rev-parse HEAD)
 GIT_TAG ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "dev")
 DOCKER_IMAGE_NAME ?= bera-reth-exex-template
 
+# Same feature/profile defaults as 0g-reth's `make build`, so this ExEx binary
+# is built with identical parameters.
+# No jemalloc on Windows
+ifeq ($(OS),Windows_NT)
+    FEATURES ?= asm-keccak min-debug-logs
+else
+    FEATURES ?= jemalloc asm-keccak min-debug-logs
+endif
+
+PROFILE ?= release
+
+###############################################################################
+###                               Build                                     ###
+###############################################################################
+
+.PHONY: build
+build: ## Build the reth binary into `target` directory, matching 0g-reth's `make build` parameters
+	cargo build --bin reth --features "$(FEATURES)" --profile "$(PROFILE)"
+
 ###############################################################################
 ###                               Docker                                    ###
 ###############################################################################
