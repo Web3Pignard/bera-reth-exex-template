@@ -11720,6 +11720,7 @@ dependencies = [
  "revm-primitives",
  "revm-state",
  "rusqlite",
+ "tempfile",
  "tikv-jemallocator",
  "tokio",
  "tracing",

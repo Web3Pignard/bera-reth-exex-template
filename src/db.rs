@@ -55,9 +55,15 @@ impl Database {
         let conn = Connection::open(db_path)
             .map_err(|e| eyre::eyre!("Failed to open database: {}", e))?;
 
-        // Enable foreign keys
-        conn.execute("PRAGMA foreign_keys = ON", [])
-            .map_err(|e| eyre::eyre!("Failed to enable foreign keys: {}", e))?;
+        // WAL + synchronous=NORMAL trade the last few uncommitted writes on a power loss
+        // for far fewer fsyncs per write; ExEx replay via reth's own FinishedHeight
+        // checkpoint (not this database) is what guarantees consistency after a crash.
+        conn.execute_batch(
+            "PRAGMA foreign_keys = ON;
+             PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = NORMAL;",
+        )
+        .map_err(|e| eyre::eyre!("Failed to configure database pragmas: {}", e))?;
 
         // Initialize schema
         conn.execute_batch(include_str!("../schema.sql"))
@@ -68,6 +74,33 @@ impl Database {
         Ok(Self {
             conn: Mutex::new(conn),
         })
+    }
+
+    // ============ Transaction Control ============
+    //
+    // These wrap a whole batch of writes (e.g. every event in one block) in a single
+    // SQL transaction, turning one fsync per statement into one fsync per batch.
+    // Each individual CRUD method below still locks/unlocks the connection per call,
+    // but SQLite only auto-commits when no transaction is explicitly open, so those
+    // calls simply become statements inside the transaction started here.
+
+    /// Begins a new SQL transaction on the underlying connection
+    pub fn begin_transaction(&self) -> Result<()> {
+        let conn = self.conn.lock().map_err(|e| eyre::eyre!("Failed to lock database: {}", e))?;
+        conn.execute_batch("BEGIN").map_err(|e| eyre::eyre!("Failed to begin transaction: {}", e))
+    }
+
+    /// Commits the currently open transaction
+    pub fn commit_transaction(&self) -> Result<()> {
+        let conn = self.conn.lock().map_err(|e| eyre::eyre!("Failed to lock database: {}", e))?;
+        conn.execute_batch("COMMIT").map_err(|e| eyre::eyre!("Failed to commit transaction: {}", e))
+    }
+
+    /// Rolls back the currently open transaction
+    pub fn rollback_transaction(&self) -> Result<()> {
+        let conn = self.conn.lock().map_err(|e| eyre::eyre!("Failed to lock database: {}", e))?;
+        conn.execute_batch("ROLLBACK")
+            .map_err(|e| eyre::eyre!("Failed to rollback transaction: {}", e))
     }
 
     // ============ Validator Operations ============
@@ -459,5 +492,52 @@ impl Database {
             .unwrap_or(0);
 
         Ok(block_number as u64)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloy_primitives::address;
+
+    fn temp_db() -> (Database, tempfile::TempPath) {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        let path = file.into_temp_path();
+        let db = Database::new(path.to_str().unwrap()).unwrap();
+        (db, path)
+    }
+
+    #[test]
+    fn test_wal_mode_enabled() {
+        let (db, _path) = temp_db();
+        let conn = db.conn.lock().unwrap();
+        let mode: String = conn.query_row("PRAGMA journal_mode", [], |row| row.get(0)).unwrap();
+        assert_eq!(mode.to_lowercase(), "wal");
+    }
+
+    #[test]
+    fn test_transaction_commit_persists_writes() {
+        let (db, _path) = temp_db();
+        let validator = address!("0x0000000000000000000000000000000000000001");
+
+        let pubkey = format!("0x{}", "ab".repeat(32));
+        db.begin_transaction().unwrap();
+        db.upsert_validator(pubkey, validator).unwrap();
+        db.commit_transaction().unwrap();
+
+        assert!(db.get_validator(&validator).unwrap().is_some());
+    }
+
+    #[test]
+    fn test_transaction_rollback_discards_writes() {
+        let (db, _path) = temp_db();
+        let validator = address!("0x0000000000000000000000000000000000000002");
+
+        let pubkey = format!("0x{}", "cd".repeat(32));
+        db.begin_transaction().unwrap();
+        db.upsert_validator(pubkey, validator).unwrap();
+        db.rollback_transaction().unwrap();
+
+        assert!(db.get_validator(&validator).unwrap().is_none());
     }
 }
