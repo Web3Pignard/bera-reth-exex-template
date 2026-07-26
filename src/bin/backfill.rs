@@ -11,7 +11,9 @@
 //! the live ExEx uses, and writes them into the indexer database.
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::Arc;
+use std::time::Duration;
 
 use alloy_primitives::hex;
 use alloy_provider::{Provider, ProviderBuilder};
@@ -25,6 +27,36 @@ use zg_reth_exex_template::event_handler::EventHandler;
 use zg_reth_exex_template::event_listener::{apply_decoded_event, decode_log};
 use zg_reth_exex_template::exex::{seed_genesis_validators, DEFAULT_DB_PATH};
 use zg_reth_exex_template::validators::ValidatorManager;
+
+const MAX_RPC_ATTEMPTS: u32 = 5;
+const INITIAL_RETRY_DELAY: Duration = Duration::from_millis(500);
+
+/// Retries a transient RPC call with exponential backoff (500ms, 1s, 2s, 4s, ...), up to
+/// `MAX_RPC_ATTEMPTS` total attempts. `f` is called fresh on every attempt since a
+/// `Future` can't be re-awaited after failing.
+async fn retry_with_backoff<F, Fut, T, E>(mut f: F) -> Result<T, E>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = Result<T, E>>,
+    E: std::fmt::Display,
+{
+    let mut delay = INITIAL_RETRY_DELAY;
+    let mut attempt = 1;
+    loop {
+        match f().await {
+            Ok(value) => return Ok(value),
+            Err(err) if attempt < MAX_RPC_ATTEMPTS => {
+                eprintln!(
+                    "RPC call failed (attempt {attempt}/{MAX_RPC_ATTEMPTS}): {err}; retrying in {delay:?}"
+                );
+                tokio::time::sleep(delay).await;
+                delay *= 2;
+                attempt += 1;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(about = "Backfill the staking indexer database from an already-synced node's RPC")]
@@ -109,7 +141,7 @@ async fn main() -> Result<()> {
         let filter =
             Filter::new().from_block(chunk_start).to_block(chunk_end).event_signature(topics.clone());
 
-        let logs = provider.get_logs(&filter).await?;
+        let logs = retry_with_backoff(|| provider.get_logs(&filter)).await?;
         println!("blocks {chunk_start}..={chunk_end}: {} matching logs", logs.len());
 
         db.begin_transaction()?;
@@ -124,8 +156,10 @@ async fn main() -> Result<()> {
                     None => match block_timestamps.get(&block_number) {
                         Some(ts) => Some(*ts),
                         None => {
-                            let block =
-                                provider.get_block_by_number(BlockNumberOrTag::Number(block_number)).await?;
+                            let block = retry_with_backoff(|| async {
+                                provider.get_block_by_number(BlockNumberOrTag::Number(block_number)).await
+                            })
+                            .await?;
                             let ts = block.map(|b| b.header.timestamp as i64);
                             if let Some(ts) = ts {
                                 block_timestamps.insert(block_number, ts);
