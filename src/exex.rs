@@ -53,6 +53,62 @@ impl Default for IndexerConfig {
     }
 }
 
+/// Seeds the four validators bootstrapped at block #1 on this 0gchain network. This is
+/// 0gchain-network-specific bootstrap data, not a general pattern. Shared by the live
+/// ExEx path and the standalone backfill tool so a backfill starting from genesis
+/// replicates it identically instead of drifting out of sync with a second copy.
+pub async fn seed_genesis_validators(event_handler: &EventHandler) -> eyre::Result<()> {
+    event_handler
+        .handle_validator_initialized(
+            String::from("0x57005c26d25f8a1784c6746f176ef451f65780d0f918ab9bd7800cfeb7b69165"),
+            address!("0x712A30816a8756c8FdB78dE63DB55aA70d3CF3B4"),
+            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
+            String::from("500000000000000000000"),
+            None,
+            Some(0),
+            None,
+        )
+        .await?;
+
+    event_handler
+        .handle_validator_initialized(
+            String::from("0xed73214d2fe5105e5c53eb74b77775970cfb96eecc5c96999d9c81766619a3d9"),
+            address!("0x81568B27b210538869f5659035eBF506d2FC3384"),
+            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
+            String::from("500000000000000000000"),
+            None,
+            Some(0),
+            None,
+        )
+        .await?;
+
+    event_handler
+        .handle_validator_initialized(
+            String::from("0x75aeacc1d243f49c9af212986dbf7277fc2728369f4c25ed17d3930bd959df26"),
+            address!("0x8EE1Af5B2791c7fa6065A02e4B579A9cC78388Fb"),
+            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
+            String::from("500000000000000000000"),
+            None,
+            Some(0),
+            None,
+        )
+        .await?;
+
+    event_handler
+        .handle_validator_initialized(
+            String::from("0xf2b0f141d3fad3247c4a200138729dba2ff0bb395837b9425431b0ec39a784d1"),
+            address!("0xcb8FB96dD0F60085c9B0ef4FFAeA219caFFBF972"),
+            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
+            String::from("500000000000000000000"),
+            None,
+            Some(0),
+            None,
+        )
+        .await?;
+
+    Ok(())
+}
+
 /// The main ExEx instance for staking indexing
 pub struct StakingIndexer {
     config: IndexerConfig,
@@ -109,41 +165,7 @@ impl StakingIndexer {
 
                 let block_result: eyre::Result<()> = async {
                     if block.number() == 1 {
-                        self.event_handler.handle_validator_initialized(
-                            String::from("0x57005c26d25f8a1784c6746f176ef451f65780d0f918ab9bd7800cfeb7b69165"),
-                             address!("0x712A30816a8756c8FdB78dE63DB55aA70d3CF3B4"),
-                             address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
-                             String::from("500000000000000000000"),
-                             None,
-                             Some(0),
-                             None).await?;
-
-                        self.event_handler.handle_validator_initialized(
-                        String::from("0xed73214d2fe5105e5c53eb74b77775970cfb96eecc5c96999d9c81766619a3d9"),
-                            address!("0x81568B27b210538869f5659035eBF506d2FC3384"),
-                            address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
-                            String::from("500000000000000000000"),
-                            None,
-                            Some(0),
-                            None).await?;
-
-                        self.event_handler.handle_validator_initialized(
-                            String::from("0x75aeacc1d243f49c9af212986dbf7277fc2728369f4c25ed17d3930bd959df26"),
-                                address!("0x8EE1Af5B2791c7fa6065A02e4B579A9cC78388Fb"),
-                                address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
-                                String::from("500000000000000000000"),
-                                None,
-                                Some(0),
-                                None).await?;
-
-                        self.event_handler.handle_validator_initialized(
-                            String::from("0xf2b0f141d3fad3247c4a200138729dba2ff0bb395837b9425431b0ec39a784d1"),
-                                address!("0xcb8FB96dD0F60085c9B0ef4FFAeA219caFFBF972"),
-                                address!("0x711b0EcB072C27DE0e50c9944d7195A51B202522"),
-                                String::from("500000000000000000000"),
-                                None,
-                                Some(0),
-                                None).await?;
+                        seed_genesis_validators(&self.event_handler).await?;
                     }
 
                     for (receipt, tx) in izip!(receipts, block.body().transactions()) {

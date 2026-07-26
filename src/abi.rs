@@ -103,6 +103,21 @@ pub fn is_withdraw_tip_fee_event(topic: &[u8; 32]) -> bool {
     topic == &WITHDRAW_TIP_FEE_TOPIC[..]
 }
 
+/// All event topics this indexer decodes (see `event_listener::decode_log`). Used to
+/// build an `eth_getLogs` topic0 filter for the backfill tool, so it only has to ask
+/// the RPC node for logs the indexer can actually do something with.
+pub fn all_event_topics() -> Vec<alloy_primitives::B256> {
+    vec![
+        alloy_primitives::B256::from(*VALIDATOR_INITIALIZED_TOPIC),
+        alloy_primitives::B256::from(*OLD_DELEGATE_TOPIC),
+        alloy_primitives::B256::from(*DELEGATE_TOPIC),
+        alloy_primitives::B256::from(*OLD_UNDELEGATE_TOPIC),
+        alloy_primitives::B256::from(*UNDELEGATE_TOPIC),
+        alloy_primitives::B256::from(*WITHDRAW_COMMISSION_TOPIC),
+        alloy_primitives::B256::from(*WITHDRAW_TIP_FEE_TOPIC),
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
