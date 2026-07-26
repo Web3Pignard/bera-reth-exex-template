@@ -24,8 +24,8 @@ PROFILE ?= release
 ###############################################################################
 
 .PHONY: build
-build: ## Build the reth binary into `target` directory, matching 0g-reth's `make build` parameters
-	cargo build --bin reth --features "$(FEATURES)" --profile "$(PROFILE)"
+build: ## Build the reth and backfill binaries into `target` directory, matching 0g-reth's `make build` parameters
+	cargo build --bin reth --bin backfill --features "$(FEATURES)" --profile "$(PROFILE)"
 
 ###############################################################################
 ###                               Docker                                    ###
